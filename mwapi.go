@@ -88,12 +88,16 @@ func (mw *Client) request(rq *http.Request) (*Response, error) {
 	if re != nil {
 		panic(re)
 	}
-	bb, be := ioutil.ReadAll(rs.Body)
+	b := borrowBuffer()
+	defer returnBuffer(b)
+	b.Grow(int(rs.ContentLength))
+	_, be := b.ReadFrom(rs.Body)
+	_ = rs.Body.Close()
 	_ = rs.Body.Close()
 	if be != nil {
 		return nil, be
 	}
-	ja := jsoniter.Get(bb)
+	ja := jsoniter.Get(b.Bytes())
 	if e := ja.LastError(); e != nil {
 		return nil, e
 	}
@@ -111,21 +115,15 @@ func (mw *Client) Get(v Values) (*Response, error) {
 	bb := borrowBuffer()
 	defer returnBuffer(bb)
 	encodeValue(bb, v)
-	rq := &http.Request{
-		Method: "GET",
-		URL: &url.URL{
-			Scheme:     mw.url.Scheme,
-			Host:       mw.url.Host,
-			Path:       mw.url.Path,
-			ForceQuery: true,
-			RawQuery:   bb.String(),
-		},
-		Proto:      "HTTP/1.1",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-		Header:     make(http.Header),
+	rq := borrowRequest("GET", mw.url.Host)
+	rq.URL = &url.URL{
+		Scheme:     mw.url.Scheme,
 		Host:       mw.url.Host,
+		Path:       mw.url.Path,
+		ForceQuery: true,
+		RawQuery:   bb.String(),
 	}
+	rq.Header = make(http.Header)
 	return mw.request(rq)
 }
 
@@ -155,5 +153,5 @@ func NewClient(apiphp string, user string, pass string) (*Client, error) {
 	if ce != nil {
 		return nil, e
 	}
-	return &Client{urlx, user, pass, &http.Client{Jar: cj}, false}, nil
+	return &Client{urlx, user, pass, &http.Client{Jar: cj}, false, LoginLegacy}, nil
 }

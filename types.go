@@ -10,10 +10,12 @@ type (
 		Result string `json:"result,omitempty"`
 		Token  string `json:"token,omitempty"`
 	}
+	//Error handles error information returned from MediaWiki API
 	Error struct {
 		Code string `json:"code"`
 		Info string `json:"info"`
 	}
+	//Gen is used as a generator in query requests
 	Gen struct {
 		Name   string
 		Values Values

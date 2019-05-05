@@ -56,6 +56,7 @@ func (mw *Client) Token(tkn ...string) (map[string]string, error) {
 	return tokens, nil
 }
 
+//Read creates a query which allows user to obtain page content
 func (mw *Client) Read() *Query {
 	return mw.Query().Prop("revisions", Values{"rvprop": "content", "rvslots": "main"})
 }
@@ -81,6 +82,7 @@ func (mw *Client) actionWithToken(action string, v Values, to interface{}) error
 	return r.Get(to, action)
 }
 
+//Edit sends an edit action
 func (mw *Client) Edit(tit string, txt string, summ string, minor, create bool, to interface{}) error {
 	v := Values{
 		"title":   tit,
@@ -97,6 +99,7 @@ func (mw *Client) Edit(tit string, txt string, summ string, minor, create bool, 
 	return mw.actionWithToken("edit", v, to)
 }
 
+//Move sends a move action
 func (mw *Client) Move(from, to, reason string, v Values, x interface{}) error {
 	if v == nil {
 		v = make(Values, 4)
@@ -111,6 +114,7 @@ func (mw *Client) Move(from, to, reason string, v Values, x interface{}) error {
 	return mw.actionWithToken("move", v, x)
 }
 
+//Delete sends a delete action
 func (mw *Client) Delete(title, reason string, v Values, x interface{}) error {
 	if v == nil {
 		v = make(Values, 4)
@@ -122,6 +126,7 @@ func (mw *Client) Delete(title, reason string, v Values, x interface{}) error {
 	return mw.actionWithToken("delete", v, x)
 }
 
+//Block sends a block action
 func (mw *Client) Block(user, expiry, reason string, v Values, x interface{}) error {
 	if v == nil {
 		v = make(Values, 4)

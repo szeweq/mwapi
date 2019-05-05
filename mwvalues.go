@@ -17,6 +17,8 @@ func encodeValue(bb *bytes.Buffer, v Values) {
 		bb.WriteString(url.QueryEscape(c))
 	}
 }
+
+//JoinValues joins maps of arguments
 func JoinValues(dst Values, srcs ...Values) {
 	for _, m := range srcs {
 		for k, v := range m {
@@ -25,6 +27,7 @@ func JoinValues(dst Values, srcs ...Values) {
 	}
 }
 
+//Generate creates values to add to an API call
 func (g Gen) Generate() Values {
 	v := make(Values, len(g.Values)+1)
 	v["generator"] = g.Name

@@ -39,14 +39,15 @@ func (mw *Client) Login() error {
 	return nil
 }
 
-func (mw *Client) Token(tkn ...string) (map[string]string, error) {
+//Token returns tokens for specified actions
+func (mw *Client) Token(names ...string) (map[string]string, error) {
 	tokens := map[string]string{}
 	v := Values{
 		"action": "query",
 		"meta":   "tokens",
 	}
-	if len(tkn) > 0 {
-		v["type"] = strings.Join(tkn, "|")
+	if len(names) > 0 {
+		v["type"] = strings.Join(names, "|")
 	}
 	r, e := mw.Post(v)
 	if e != nil {

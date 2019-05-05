@@ -13,7 +13,7 @@ import (
 )
 
 type (
-	// Client handles all requests to MediaWiki API
+	//Client handles all requests to MediaWiki API
 	Client struct {
 		url   *url.URL
 		uname string
@@ -21,9 +21,11 @@ type (
 		htcl  *http.Client
 		login bool
 	}
+	//Response contains json-encoded API result
 	Response struct {
 		v jsoniter.Any
 	}
+	//Values hold query arguments for an API call
 	Values map[string]string
 )
 

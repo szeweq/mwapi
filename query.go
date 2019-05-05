@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type (
+	//Query builds a query action for API call
 	Query struct {
 		c       *Client
 		lists   []string
@@ -16,33 +16,28 @@ type (
 		pageids []int64
 		gen     []Gen
 		v       Values
-		cont    string
 		r       *Response
 	}
+
+	//QueryPage holds basic data returned by a query request
 	QueryPage struct {
 		PageID  int64  `json:"pageid"`
 		NS      int    `json:"ns"`
 		Title   string `json:"title"`
 		Missing bool   `json:"missing,omitempty"`
 	}
-	QueryPropInfo struct {
-		ContentModel string    `json:"contentmodel"`
-		Touched      time.Time `json:"touched"`
-		LastRevID    int64     `json:"lastrevid"`
-		Length       uint64    `json:"length"`
-	}
-	QueryRevision struct {
-		Slots struct {
-			Main QueryRevisionContent `json:"main"`
-		} `json:"slots"`
-	}
-	QueryRevisionContent struct {
-		ContentModel string `json:"contentmodel"`
-		Content      string `json:"content"`
-	}
+
+	//ReadPage holds returned data with page content
 	ReadPage struct {
 		QueryPage
-		Revisions []QueryRevision
+		Revisions []struct {
+			Slots struct {
+				Main struct {
+					ContentModel string `json:"contentmodel"`
+					Content      string `json:"content"`
+				} `json:"main"`
+			} `json:"slots"`
+		} `json:"revisions"`
 	}
 )
 
@@ -54,15 +49,19 @@ var (
 	}
 )
 
+//Content gets page content from a current revision
 func (rp *ReadPage) Content() string {
 	return rp.Revisions[0].Slots.Main.Content
 }
 
+//Query gets a fresh query builder from a pool
 func (mw *Client) Query() *Query {
 	q := poolQuery.Get().(*Query)
 	q.c = mw
 	return q
 }
+
+//ReturnToPool sets all contained data to default end adds a query builder to a pool
 func (q *Query) ReturnToPool() {
 	q.c = nil
 	q.lists = q.lists[:0]
@@ -74,6 +73,8 @@ func (q *Query) ReturnToPool() {
 	q.r = nil
 	poolQuery.Put(q)
 }
+
+//With adds arrays of page titles, page IDs and a generator for a query request
 func (q *Query) With(v ...interface{}) *Query {
 	for _, a := range v {
 		switch x := a.(type) {
@@ -91,6 +92,8 @@ func (q *Query) With(v ...interface{}) *Query {
 	}
 	return q
 }
+
+//List adds a "list" argument for a query request
 func (q *Query) List(list string, v Values) *Query {
 	q.lists = append(q.lists, list)
 	if v != nil && len(v) > 0 {
@@ -100,6 +103,8 @@ func (q *Query) List(list string, v Values) *Query {
 	}
 	return q
 }
+
+//Prop adds a "prop" argument for a query request
 func (q *Query) Prop(prop string, v Values) *Query {
 	q.props = append(q.props, prop)
 	if v != nil && len(v) > 0 {
@@ -109,6 +114,8 @@ func (q *Query) Prop(prop string, v Values) *Query {
 	}
 	return q
 }
+
+//Continue handles "continue" tokens from response
 func (q *Query) Continue(cont ...string) bool {
 	if q.r == nil {
 		q.v["rawcontinue"] = ""
@@ -127,6 +134,7 @@ func (q *Query) Continue(cont ...string) bool {
 	return false
 }
 
+//Do prepares request data and sends them to MediaWiki server
 func (q *Query) Do() (e error) {
 	xv := q.v
 	var bb bytes.Buffer

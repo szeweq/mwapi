@@ -10,9 +10,9 @@ import (
 type (
 	Query struct {
 		c       *Client
-		lists   PipedStrings
-		props   PipedStrings
-		titles  PipedStrings
+		lists   []string
+		props   []string
+		titles  []string
 		pageids []int64
 		gen     []Gen
 		v       Values
@@ -131,8 +131,7 @@ func (q *Query) Do() (e error) {
 	xv := q.v
 	var bb bytes.Buffer
 	if len(q.titles) > 0 {
-		q.titles.Append(&bb)
-		xv["titles"] = bb.String()
+		xv["titles"] = appendStrings(&bb, q.titles)
 		bb.Reset()
 	}
 	if len(q.pageids) > 0 {
@@ -147,13 +146,11 @@ func (q *Query) Do() (e error) {
 		b = b[:0]
 	}
 	if len(q.props) > 0 {
-		q.props.Append(&bb)
-		xv["prop"] = bb.String()
+		xv["prop"] = appendStrings(&bb, q.props)
 		bb.Reset()
 	}
 	if len(q.lists) > 0 {
-		q.lists.Append(&bb)
-		xv["list"] = bb.String()
+		xv["list"] = appendStrings(&bb, q.lists)
 		bb.Reset()
 	}
 	if len(q.gen) > 0 {
@@ -172,6 +169,7 @@ func (q *Query) Do() (e error) {
 	q.r, e = q.c.Post(xv)
 	return
 }
+
 func (q *Query) Get(v interface{}, path ...interface{}) error {
 	path = append([]interface{}{"query"}, path...)
 	return q.r.Get(v, path...)

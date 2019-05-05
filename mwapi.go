@@ -13,6 +13,7 @@ import (
 )
 
 type (
+	// Client handles all requests to MediaWiki API
 	Client struct {
 		url   *url.URL
 		uname string
@@ -64,6 +65,7 @@ func returnBuffer(b *bytes.Buffer) {
 	poolBuffer.Put(b)
 }
 
+//Get saves decoded response to a value with specified path
 func (mr *Response) Get(to interface{}, path ...interface{}) error {
 	x := mr.v.Get(path...)
 	if e := mr.v.LastError(); e != nil {
@@ -72,7 +74,7 @@ func (mr *Response) Get(to interface{}, path ...interface{}) error {
 	if x.ValueType() == jsoniter.InvalidValue {
 		var b jsoniter.RawMessage
 		mr.v.ToVal(&b)
-		return fmt.Errorf("Invalid value %s on %s", path, b)
+		return fmt.Errorf("invalid value %s on %s", path, b)
 	}
 	x.ToVal(to)
 	return nil
@@ -83,9 +85,8 @@ func (mw *Client) request(rq *http.Request) (*Response, error) {
 	if re != nil {
 		panic(re)
 	}
-	defer rs.Body.Close()
 	bb, be := ioutil.ReadAll(rs.Body)
-	rs.Body.Close()
+	_ = rs.Body.Close()
 	if be != nil {
 		return nil, be
 	}
@@ -95,17 +96,18 @@ func (mw *Client) request(rq *http.Request) (*Response, error) {
 	}
 	je := ja.Get("error")
 	if je.ValueType() == jsoniter.ObjectValue {
-		var mae MWAPIError
+		var mae Error
 		je.ToVal(&mae)
 		return &Response{jsoniter.Wrap(nil)}, mae
 	}
 	return &Response{ja}, nil
 }
 
+//Get handles GET request with specified values
 func (mw *Client) Get(v Values) (*Response, error) {
 	bb := borrowBuffer()
 	defer returnBuffer(bb)
-	EncodeValue(bb, v)
+	encodeValue(bb, v)
 	rq := &http.Request{
 		Method: "GET",
 		URL: &url.URL{
@@ -124,10 +126,11 @@ func (mw *Client) Get(v Values) (*Response, error) {
 	return mw.request(rq)
 }
 
+//Post handles POST request with specified values
 func (mw *Client) Post(v Values) (*Response, error) {
 	bb := borrowBuffer()
 	defer returnBuffer(bb)
-	EncodeValue(bb, v)
+	encodeValue(bb, v)
 	rq := borrowRequest("POST", mw.url.Host)
 	defer returnRequest(rq)
 	rq.URL = mw.url
@@ -139,6 +142,7 @@ func (mw *Client) Post(v Values) (*Response, error) {
 	return mw.request(rq)
 }
 
+//NewClient creates a new Client
 func NewClient(apiphp string, user string, pass string) (*Client, error) {
 	urlx, e := url.Parse(apiphp)
 	if e != nil {

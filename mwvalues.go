@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func EncodeValue(bb *bytes.Buffer, v Values) {
+func encodeValue(bb *bytes.Buffer, v Values) {
 	if v == nil {
 		return
 	}

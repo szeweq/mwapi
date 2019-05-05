@@ -10,6 +10,7 @@ var (
 	errNoCSRF = errors.New("no CSRF Token provided")
 )
 
+//Login handles user login via an API
 func (mw *Client) Login() error {
 	var a loginInfo
 	mwv := Values{

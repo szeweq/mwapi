@@ -20,6 +20,7 @@ type (
 		paswd string
 		htcl  *http.Client
 		login bool
+		LoginType
 	}
 	//Response contains json-encoded API result
 	Response struct {

@@ -2,42 +2,12 @@ package mwapi
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 )
 
 var (
 	errNoCSRF = errors.New("no CSRF Token provided")
 )
-
-//Login handles user login via an API
-func (mw *Client) Login() error {
-	var a loginInfo
-	mwv := Values{
-		"action":     "login",
-		"lgname":     mw.uname,
-		"lgpassword": mw.paswd,
-	}
-	r, e := mw.Post(mwv)
-	if e != nil {
-		return e
-	}
-	_ = r.Get(&a, "login")
-	if a.Result == "" {
-		return fmt.Errorf("LOGIN NO RESULT %#v", a)
-	}
-	mwv["lgtoken"] = a.Token
-	r, e = mw.Post(mwv)
-	if e != nil {
-		return e
-	}
-	_ = r.Get(&a, "login")
-	if a.Result != "Success" {
-		return fmt.Errorf("LOGIN TOKEN NO RESULT %#v", a)
-	}
-	mw.login = true
-	return nil
-}
 
 //Token returns tokens for specified actions
 func (mw *Client) Token(names ...string) (map[string]string, error) {

@@ -175,13 +175,13 @@ func (q *Query) Do() (e error) {
 		bb.Reset()
 	}
 	q.r, e = q.c.Post(xv)
+	q.r.path = []interface{}{"query"}
 	return
 }
 
-//Get saves query result with a specified path to a value
-func (q *Query) Get(v interface{}, path ...interface{}) error {
-	path = append([]interface{}{"query"}, path...)
-	return q.r.Get(v, path...)
+//Response returns recently received response
+func (q *Query) Response() *Response {
+	return q.r
 }
 
 //Pages saves information about queried pages to a value

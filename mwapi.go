@@ -2,7 +2,6 @@ package mwapi
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -22,10 +21,7 @@ type (
 		login bool
 		LoginType
 	}
-	//Response contains json-encoded API result
-	Response struct {
-		v jsoniter.Any
-	}
+
 	//Values hold query arguments for an API call
 	Values map[string]string
 )
@@ -68,21 +64,6 @@ func returnBuffer(b *bytes.Buffer) {
 	poolBuffer.Put(b)
 }
 
-//Get saves decoded response to a value with specified path
-func (mr *Response) Get(to interface{}, path ...interface{}) error {
-	x := mr.v.Get(path...)
-	if e := mr.v.LastError(); e != nil {
-		return e
-	}
-	if x.ValueType() == jsoniter.InvalidValue {
-		var b jsoniter.RawMessage
-		mr.v.ToVal(&b)
-		return fmt.Errorf("invalid value %s on %s", path, b)
-	}
-	x.ToVal(to)
-	return nil
-}
-
 func (mw *Client) request(rq *http.Request) (*Response, error) {
 	rs, re := mw.htcl.Do(rq)
 	if re != nil {
@@ -90,7 +71,9 @@ func (mw *Client) request(rq *http.Request) (*Response, error) {
 	}
 	b := borrowBuffer()
 	defer returnBuffer(b)
-	b.Grow(int(rs.ContentLength))
+	if rs.ContentLength > 0 {
+		b.Grow(int(rs.ContentLength))
+	}
 	_, be := b.ReadFrom(rs.Body)
 	_ = rs.Body.Close()
 	_ = rs.Body.Close()
@@ -105,9 +88,9 @@ func (mw *Client) request(rq *http.Request) (*Response, error) {
 	if je.ValueType() == jsoniter.ObjectValue {
 		var mae Error
 		je.ToVal(&mae)
-		return &Response{jsoniter.Wrap(nil)}, mae
+		return &Response{v: jsoniter.Wrap(nil)}, mae
 	}
-	return &Response{ja}, nil
+	return &Response{v: ja}, nil
 }
 
 //Get handles GET request with specified values

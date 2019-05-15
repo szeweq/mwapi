@@ -2,6 +2,7 @@ package mwapi
 
 import "fmt"
 
+//LoginType specifies which login method should be used
 type LoginType int
 
 const (

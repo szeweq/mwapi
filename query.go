@@ -186,5 +186,5 @@ func (q *Query) Response() *Response {
 
 //Pages saves information about queried pages to a value
 func (q *Query) Pages(v interface{}) error {
-	return q.r.Get(v, "query", "pages")
+	return q.r.GetRaw(v, "query", "pages")
 }

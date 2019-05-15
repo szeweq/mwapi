@@ -50,7 +50,7 @@ func (mw *Client) actionWithToken(action string, v Values) (*Response, error) {
 }
 
 //Edit sends an edit action
-func (mw *Client) Edit(title string, txt string, summ string, minor, create bool, to interface{}) (*Response, error) {
+func (mw *Client) Edit(title string, txt string, summ string, minor, create bool) (*Response, error) {
 	v := Values{
 		"title":   title,
 		"text":    txt,
@@ -67,7 +67,7 @@ func (mw *Client) Edit(title string, txt string, summ string, minor, create bool
 }
 
 //Move sends a move action
-func (mw *Client) Move(from, to, reason string, v Values, x interface{}) (*Response, error) {
+func (mw *Client) Move(from, to, reason string, v Values) (*Response, error) {
 	if v == nil {
 		v = make(Values, 4)
 	}
@@ -82,7 +82,7 @@ func (mw *Client) Move(from, to, reason string, v Values, x interface{}) (*Respo
 }
 
 //Delete sends a delete action
-func (mw *Client) Delete(title, reason string, v Values, x interface{}) (*Response, error) {
+func (mw *Client) Delete(title, reason string, v Values) (*Response, error) {
 	if v == nil {
 		v = make(Values, 4)
 	}
@@ -94,7 +94,7 @@ func (mw *Client) Delete(title, reason string, v Values, x interface{}) (*Respon
 }
 
 //Block sends a block action
-func (mw *Client) Block(user, expiry, reason string, v Values, x interface{}) (*Response, error) {
+func (mw *Client) Block(user, expiry, reason string, v Values) (*Response, error) {
 	if v == nil {
 		v = make(Values, 4)
 	}

@@ -17,7 +17,7 @@ type (
 		url   *url.URL
 		uname string
 		paswd string
-		htcl  *http.Client
+		cli   *http.Client
 		login bool
 		LoginType
 	}
@@ -34,6 +34,11 @@ var (
 				ProtoMajor: 1,
 				ProtoMinor: 1,
 			}
+		},
+	}
+	poolResponse = sync.Pool{
+		New: func() interface{} {
+			return &Response{}
 		},
 	}
 	poolBuffer = sync.Pool{
@@ -56,6 +61,10 @@ func returnRequest(r *http.Request) {
 	poolRequest.Put(r)
 }
 
+func borrowResponse() *Response {
+	return poolResponse.Get().(*Response)
+}
+
 func borrowBuffer() *bytes.Buffer {
 	return poolBuffer.Get().(*bytes.Buffer)
 }
@@ -64,33 +73,37 @@ func returnBuffer(b *bytes.Buffer) {
 	poolBuffer.Put(b)
 }
 
-func (mw *Client) request(rq *http.Request) (*Response, error) {
-	rs, re := mw.htcl.Do(rq)
-	if re != nil {
-		panic(re)
+func (mw *Client) request(rq *http.Request) (r *Response, e error) {
+	rs, e := mw.cli.Do(rq)
+	returnRequest(rq)
+	if e != nil {
+		return
 	}
 	b := borrowBuffer()
 	defer returnBuffer(b)
 	if rs.ContentLength > 0 {
 		b.Grow(int(rs.ContentLength))
 	}
-	_, be := b.ReadFrom(rs.Body)
+	_, e = b.ReadFrom(rs.Body)
 	_ = rs.Body.Close()
-	_ = rs.Body.Close()
-	if be != nil {
-		return nil, be
+	if e != nil {
+		return
 	}
 	ja := jsoniter.Get(b.Bytes())
-	if e := ja.LastError(); e != nil {
-		return nil, e
+	if e = ja.LastError(); e != nil {
+		return
 	}
+	r = borrowResponse()
 	je := ja.Get("error")
 	if je.ValueType() == jsoniter.ObjectValue {
 		var mae Error
 		je.ToVal(&mae)
-		return &Response{v: jsoniter.Wrap(nil)}, mae
+		r.v = jsoniter.Wrap(nil)
+		e = mae
+	} else {
+		r.v = ja
 	}
-	return &Response{v: ja}, nil
+	return
 }
 
 //Get handles GET request with specified values
@@ -116,7 +129,6 @@ func (mw *Client) Post(v Values) (*Response, error) {
 	defer returnBuffer(bb)
 	encodeValue(bb, v)
 	rq := borrowRequest("POST", mw.url.Host)
-	defer returnRequest(rq)
 	rq.URL = mw.url
 	rq.Header = http.Header{
 		"Content-Type": {"application/x-www-form-urlencoded"},
@@ -132,8 +144,8 @@ func NewClient(apiphp string, user string, pass string) (*Client, error) {
 	if e != nil {
 		return nil, e
 	}
-	cj, ce := cookiejar.New(nil)
-	if ce != nil {
+	cj, e := cookiejar.New(nil)
+	if e != nil {
 		return nil, e
 	}
 	return &Client{urlx, user, pass, &http.Client{Jar: cj}, false, LoginLegacy}, nil

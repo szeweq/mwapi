@@ -32,3 +32,10 @@ func (r *Response) GetRaw(to interface{}, path ...interface{}) error {
 	x.ToVal(to)
 	return nil
 }
+
+//ReturnToPool sets all contained data to default end adds a response to a pool
+func (r *Response) ReturnToPool() {
+	r.v = nil
+	r.path = r.path[:0]
+	poolResponse.Put(r)
+}

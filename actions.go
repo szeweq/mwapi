@@ -30,10 +30,10 @@ func (mw *Client) Read() *Query {
 	return mw.Query().Prop("revisions", Values{"rvprop": "content", "rvslots": "main"})
 }
 
-func (mw *Client) actionWithToken(action string, v Values) (*Response, error) {
+func (mw *Client) actionWithToken(action string, v Values) (r *Response, e error) {
 	tkm, e := mw.Token()
 	if e != nil {
-		return nil, e
+		return
 	}
 	tk, ok := tkm["csrftoken"]
 	if !ok {
@@ -41,12 +41,11 @@ func (mw *Client) actionWithToken(action string, v Values) (*Response, error) {
 	}
 	v["action"] = action
 	v["token"] = tk
-	r, e := mw.Post(v)
-	if e != nil {
-		return nil, e
+	r, e = mw.Post(v)
+	if e == nil {
+		r.path = []interface{}{action}
 	}
-	r.path = []interface{}{action}
-	return r, nil
+	return
 }
 
 //Edit sends an edit action

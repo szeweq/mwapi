@@ -104,3 +104,16 @@ func (mw *Client) Block(user, expiry, reason string, v Values) (*Response, error
 	})
 	return mw.actionWithToken("block", v)
 }
+
+func (mw *Client) Protect(title, protection, expiry, reason string, v Values) (*Response, error) {
+	if v == nil {
+		v = make(Values, 4)
+	}
+	JoinValues(v, Values{
+		"title":       title,
+		"protections": protection,
+		"expiry":      expiry,
+		"reason":      reason,
+	})
+	return mw.actionWithToken("protect", v)
+}

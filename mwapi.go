@@ -61,13 +61,6 @@ func returnRequest(r *http.Request) {
 	poolRequest.Put(r)
 }
 
-func borrowResponse() *Response {
-	return poolResponse.Get().(*Response)
-}
-
-func borrowBuffer() *bytes.Buffer {
-	return poolBuffer.Get().(*bytes.Buffer)
-}
 func returnBuffer(b *bytes.Buffer) {
 	b.Reset()
 	poolBuffer.Put(b)
@@ -79,7 +72,7 @@ func (mw *Client) request(rq *http.Request) (r *Response, e error) {
 	if e != nil {
 		return
 	}
-	b := borrowBuffer()
+	b := poolBuffer.Get().(*bytes.Buffer)
 	defer returnBuffer(b)
 	if rs.ContentLength > 0 {
 		b.Grow(int(rs.ContentLength))
@@ -93,7 +86,7 @@ func (mw *Client) request(rq *http.Request) (r *Response, e error) {
 	if e = ja.LastError(); e != nil {
 		return
 	}
-	r = borrowResponse()
+	r = poolResponse.Get().(*Response)
 	je := ja.Get("error")
 	if je.ValueType() == jsoniter.ObjectValue {
 		var mae Error
@@ -108,7 +101,7 @@ func (mw *Client) request(rq *http.Request) (r *Response, e error) {
 
 //Get handles GET request with specified values
 func (mw *Client) Get(v Values) (*Response, error) {
-	bb := borrowBuffer()
+	bb := poolBuffer.Get().(*bytes.Buffer)
 	defer returnBuffer(bb)
 	encodeValue(bb, v)
 	rq := borrowRequest("GET", mw.url.Host)
@@ -125,7 +118,7 @@ func (mw *Client) Get(v Values) (*Response, error) {
 
 //Post handles POST request with specified values
 func (mw *Client) Post(v Values) (*Response, error) {
-	bb := borrowBuffer()
+	bb := poolBuffer.Get().(*bytes.Buffer)
 	defer returnBuffer(bb)
 	encodeValue(bb, v)
 	rq := borrowRequest("POST", mw.url.Host)

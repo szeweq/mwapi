@@ -70,6 +70,7 @@ func (q *Query) ReturnToPool() {
 	q.pageids = q.pageids[:0]
 	q.gen = q.gen[:0]
 	q.v = Values{"action": "query"}
+	q.r.ReturnToPool()
 	q.r = nil
 	poolQuery.Put(q)
 }
